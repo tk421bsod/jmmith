@@ -1,3 +1,4 @@
+import asyncio
 import logging
 import traceback
 
@@ -21,7 +22,6 @@ class settings(commands.Cog):
             self.logger.debug("Created a task for filling the setting cache")
 
     async def fill_settings_cache(self):
-        '''Fills the settings cache with data about each setting's state in each guild'''
         self.logger.info("Filling settings cache...")
         await self.bot.wait_until_ready()
         try:
@@ -46,7 +46,6 @@ class settings(commands.Cog):
         for setting in data:
             #initialize settings to blank dicts to prevent keyerrors
             tempsettings[setting['setting']] = {}
-        #then actually fill the cache
         for setting in data:
             for guild in self.bot.guilds:
                 if setting['guild_id'] == guild.id:
@@ -58,22 +57,18 @@ class settings(commands.Cog):
         self.logger.info("Done filling settings cache.")
         
     async def update_setting(self, ctx, setting):
-        '''Toggles a setting to the inverse of its previous state.'''
         if not self.bot.dbinst.exec_safe_query(self.bot.database, "select * from jmmboardconfig where guild_id=%s", (ctx.guild.id)):
                 self.bot.dbinst.exec_safe_query(self.bot.database, "insert into jmmboardconfig values(%s, %s, %s)", (ctx.guild.id, setting, True))
         else:
             self.bot.dbinst.exec_safe_query(self.bot.database, "update jmmboardconfig set enabled=%s where guild_id=%s and setting=%s", (not self.bot.settings[setting][ctx.guild.id], ctx.guild.id, setting))
 
     async def prepare_conflict_string(self, conflicts):
-        '''Formats a string containing the names of conflicting settings.'''
-        #hacky way of using quotes inside fstrings
         q = "'"
         if not isinstance(conflicts, list):
             return f"{q}*{conflicts}*{q}"
         return f"{', '.join([f'{q}*{i}*{q}' for i in conflicts[:-1]])} and '*{conflicts[-1]}*'"
 
     async def resolve_conflicts(self, ctx, setting):
-        '''Checks for conflicts, resolves them if needed, and prepares a message for the user describing what was resolved'''
         if isinstance(self.unusablewithmapping[setting], list):
             resolved = []
             for conflict in self.unusablewithmapping[setting]:
@@ -104,7 +99,7 @@ class settings(commands.Cog):
                 if ctx.guild.id in list(value.keys()):
                     unusablewith = self.unusablewithmapping[key]
                     if unusablewith:
-                        unusablewithwarning = f"Cannot be enabled at the same time as {await self.prepare_conflict_string(unusablewith)}."
+                        unusablewithwarning = f"Cannot be enabled at the same time as {await self.prepare_conflict_string(unusablewith)}"
                     else:
                         unusablewithwarning = ""
                     embed.add_field(name=f"{discord.utils.remove_markdown(self.settingdescmapping[key].capitalize())} ({key})", value=f"{'<:red_x:813135049083191307> Disabled' if not value[ctx.guild.id] else '✅ Enabled'}\n{unusablewithwarning} ", inline=True)
