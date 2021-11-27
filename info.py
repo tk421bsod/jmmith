@@ -107,7 +107,10 @@ class info(commands.Cog):
             else:
                 desc += f"{award}: {value[0]} ({value[1]['messages']} messages on the jmmboard, {value[1]['reactions']} golden jmms recieved, {value[1]['draobmmjmessages']} messages on the draobmmj, {value[1]['draobmmjreactions']} nogoldjmms recieved, a jmmscore of {value[1]['reactions']-value[1]['draobmmjreactions']}, and {value[1]['positivity']}% positive reactions)\n"
         leaderboard = discord.Embed(title="Jmmboard leaderboard:", description=desc, color=0xFDFE00)
-        await ctx.send(embed=leaderboard)
+        try:
+            await ctx.send(embed=leaderboard)
+        except discord.HTTPException:
+            await ctx.send("<:blobpaiN:839543891518685225> I can't show what you requested. Try using a smaller limit. (or a smaller interval if you're using leaderboard slicing)")
 
     @commands.command(hidden=True, aliases=['stats', 'jmmboardstats'])
     async def jmmstats(self, ctx, *, user=None):
