@@ -15,6 +15,7 @@ class info(commands.Cog):
             return None
 
     async def get_jmms(self):
+        '''Gets jmmboard data for every user'''
         jmmmapping = {}
         for message in self.bot.messages:
             try:
@@ -40,6 +41,16 @@ class info(commands.Cog):
             else:
                 jmmmapping[i]['positivity'] = round((jmmmapping[i]['reactions']/(jmmmapping[i]['reactions']+jmmmapping[i]['draobmmjreactions']))*100,1)
         return jmmmapping
+
+    async def get_most_jmms(self, user):
+        jmms = []
+        for message in self.bot.messages:
+            for i in message.reactions: 
+                if hasattr(i.emoji, 'id'):
+                    if i.emoji.id == 774445538409054218:
+                        if i.count >= 1:
+                            jmms.append({'message':message, 'reactions':i.count})
+            return jmms
 
     def get_messages(self, m):
         return m[1]['messages']
@@ -77,6 +88,29 @@ class info(commands.Cog):
         elif self.is_enabled('sort by positivity', guild_id):
             return self.get_positivity
         return self.get_messages
+
+    @commands.command(hidden=True, aliases=['mostjmms'])
+    async def mostjmmed(self, ctx, *, user=None):
+        if self.bot.cache_lock.locked() and self.bot.initial_caching == True:
+            return await ctx.send(f"The message cache isn't ready yet. Try again later. \n{self.bot.itercount}/{len(self.bot.guilds[0].text_channels)+len(self.bot.guilds[0].threads)} channels have been cached.")
+        if user:
+            ret = await self.convert_to_member(ctx, user)
+            if not ret:
+                return await ctx.send("I can't find that user.")
+            user = ret
+        else:
+            user = ctx.author
+        most_jmmed = self.get_most_jmms(str(user))
+        most_jmmed = sorted(most_jmmed, key=self.get_reactions, reverse=True)
+        if not most_jmmed:
+            return await ctx.send("It doesn't look like you have any golden jmms on your messages.")
+        desc = ""
+        for i in most_jmmed:
+            if len(desc+f"{i['reactions']} gold jmms: [Go to message]({i['message'].jump_url})") >= 4096:
+                break
+            desc += f"{i['reactions']} gold jmms: [Go to message]({i['message'].jump_url})"
+        await ctx.send(embed=discord.Embed(title=f"{user}'s most golden jmmed messages:", description=desc, color=0xFDFE00))
+
 
     @commands.command(hidden=True, aliases=['leaderboard', 'jmmleaderboards'])
     async def jmmleaderboard(self, ctx, limit:typing.Optional[str]=None):
