@@ -100,7 +100,7 @@ class info(commands.Cog):
             user = ret
         else:
             user = ctx.author
-        most_jmmed = self.get_most_jmms(str(user))
+        most_jmmed = await self.get_most_jmms(str(user))
         most_jmmed = sorted(most_jmmed, key=self.get_reactions, reverse=True)
         if not most_jmmed:
             return await ctx.send("It doesn't look like you have any golden jmms on your messages.")
