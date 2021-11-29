@@ -45,12 +45,14 @@ class info(commands.Cog):
     async def get_most_jmms(self, user):
         jmms = []
         for message in self.bot.messages:
+            if message.author != user:
+                continue
             for i in message.reactions: 
                 if hasattr(i.emoji, 'id'):
                     if i.emoji.id == 774445538409054218:
                         if i.count >= 1:
                             jmms.append({'message':message, 'reactions':i.count})
-            return jmms
+        return jmms
 
     def get_messages(self, m):
         return m[1]['messages']
