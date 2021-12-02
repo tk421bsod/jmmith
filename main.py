@@ -173,4 +173,4 @@ async def on_raw_reaction_add(payload):
                 await add_to_jmmboard(payload, message, channel, starboardchannel, guild, True)
                 break
 
-bot.run(common.token().get('jmmboardtoken.txt'))
+bot.run(common.token().get('token.txt'))
