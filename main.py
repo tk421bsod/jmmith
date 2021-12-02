@@ -6,6 +6,7 @@ import asyncio
 import common
 import helpcommand
 import time
+import sys
 
 class Version:
     def __init__(self):
@@ -27,10 +28,17 @@ intents.members = True
 bot = commands.Bot(help_command=helpcommand.HelpCommand(), command_prefix="+", owner_id=538193752913608704, intents=intents, activity=discord.Activity(type=discord.ActivityType.playing, name="starting up..."))
 bot.start_time = time.time()
 bot.logger = logging.getLogger('jmmith')
-bot.dbip = "10.0.0.51"
+bot.dbip = 'localhost'
 bot.messages = []
 bot.database = "maximilian"
 bot.dbinst = common.db(bot)
+try:
+    bot.dbinst.connect(bot.database)
+except pymysql.err.OperationalError:
+    bot.logger.critical(f"Couldn't connect to a local database. Trying 10.0.0.51")
+    bot.dbip = '10.0.0.51'
+    bot.dbinst = common.db(bot)
+    bot.dbinst.connect(bot.database)
 bot.cache_lock = asyncio.Lock()
 bot.itercount = 0
 bot.messagecount = 1
