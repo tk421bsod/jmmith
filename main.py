@@ -18,7 +18,7 @@ def parse_version(versionstring):
     version.major, version.minor, version.patch = [int(i) for i in versionstring.replace('a','').split('.')]
     return version
 
-logging.basicConfig(level=logging.WARN)
+logging.basicConfig(level=logging.INFO)
 print("starting...")
 intents = discord.Intents.default()
 intents.reactions = True
@@ -27,7 +27,6 @@ intents.members = True
 bot = commands.Bot(help_command=helpcommand.HelpCommand(), command_prefix="+", owner_id=538193752913608704, intents=intents, activity=discord.Activity(type=discord.ActivityType.playing, name="starting up..."))
 bot.start_time = time.time()
 bot.logger = logging.getLogger('jmmith')
-logging.basicConfig(level=logging.INFO)
 bot.dbip = "10.0.0.51"
 bot.messages = []
 bot.database = "maximilian"
