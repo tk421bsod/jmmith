@@ -25,7 +25,7 @@ cp maximilian/helpcommand.py .
 cp maximilian/core.py .
 cp maximilian/errors.py .
 echo "Finishing database setup..."
-sudo mysql maximilian -Be "CREATE TABLE jmmboard(message_id bigint); CREATE TABLE jmmboardconfig(guild_id bigint, setting text, enabled tinyint);"
+sudo mysql maximilian -Be "CREATE TABLE jmmboard(message_id bigint); CREATE TABLE draobmmj(message_id bigint); CREATE TABLE jmmboardconfig(guild_id bigint, setting text, enabled tinyint);"
 echo "Cleaning up..."
 rm -rf maximilian
 echo "Done. Try running main.py. If you want Jmmith to work in threads, install discord.py 2.0 (instructions are at https://github.com/rapptz/discord.py/blob/master/README.rst)"
