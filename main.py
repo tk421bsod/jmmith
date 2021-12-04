@@ -103,8 +103,9 @@ async def update_cache():
     async with bot.cache_lock:
         for i in bot.guilds[0].text_channels:
             await add_to_cache(i)
-        for i in bot.guilds[0].threads:
-            await add_to_cache(i)
+        if bot_IS_DPY_2:
+            for i in bot.guilds[0].threads:
+                await add_to_cache(i)
 
 @bot.event
 async def on_ready():
@@ -115,8 +116,9 @@ async def on_ready():
     async with bot.cache_lock:
         for i in bot.guilds[0].text_channels:
             await add_to_cache(i)
-        for i in bot.guilds[0].threads:
-            await add_to_cache(i)
+        if bot.IS_DPY_2:
+            for i in bot.guilds[0].threads:
+                await add_to_cache(i)
     await bot.change_presence(activity=discord.Activity(type=discord.ActivityType.watching, name=" for 4 or more golden jmms!"))
     print("Done adding stuff to cache.")
     bot.initial_caching = False
