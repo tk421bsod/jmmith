@@ -52,12 +52,9 @@ else:
 bot.load_extension('jishaku')
 bot.load_extension('jmmboardconfig')
 bot.load_extension('info')
-try:
-    #maximilian extensions that provide some useful functionality
-    bot.load_extension('core')
-    bot.load_extension('errorhandling')
-except commands.errors.ExtensionNotFound:
-    pass
+#maximilian extensions that provide some useful functionality
+bot.load_extension('core')
+bot.load_extension('errorhandling')
 
 def progress_bar(current, total, barlength, extrainfo):
     percent = float(current) * 100 / total
