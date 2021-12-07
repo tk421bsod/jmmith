@@ -1,8 +1,16 @@
 echo "---- Jmmith Setup ----"
-echo "This script helps setup Jmmith. It uses Maximilian's setup.sh and a few extra things."
+echo "This script helps set up Jmmith. It uses Maximilian's setup script, then does a few extra steps."
 echo "Cloning Maximilian..."
 echo ""
-git clone https://github.com/tk421bsod/maximilian
+if [ -d maximilian ]
+then
+    echo "It looks like Maximilian was already cloned. Pulling changes...
+    cd maximilian
+    git pull
+    cd ..
+else
+    git clone https://github.com/tk421bsod/maximilian
+fi
 echo ""
 echo "Running Maximilian's setup.sh... Follow the prompts it gives you."
 echo ""
@@ -25,7 +33,7 @@ cp maximilian/helpcommand.py .
 cp maximilian/core.py .
 cp maximilian/errors.py .
 echo "Finishing database setup..."
-sudo mysql maximilian -Be "CREATE TABLE jmmboard(message_id bigint); CREATE TABLE jmmboardconfig(guild_id bigint, setting text, enabled tinyint);"
+sudo mysql maximilian -Be "CREATE TABLE jmmboard(message_id bigint); CREATE TABLE draobmmj(message_id bigint); CREATE TABLE jmmboardconfig(guild_id bigint, setting text, enabled tinyint);"
 echo "Cleaning up..."
 rm -rf maximilian
 echo "Done. Try running main.py. If you want Jmmith to work in threads, install discord.py 2.0 (instructions are at https://github.com/rapptz/discord.py/blob/master/README.rst)"
