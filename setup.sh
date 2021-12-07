@@ -17,14 +17,15 @@ echo ""
 cd maximilian
 sleep 1
 bash setup.sh
+result = $?
+cd ..
 echo ""
-if [ $? != 0 ]
+if [ $result != 0 ]
 then
     echo "Maximilian's setup exited unexpectedly. Try running this again."
     exit 37
 fi
 echo "Moving some Maximilian components here..."
-cd ..
 cp maximilian/common.py .
 cp maximilian/errorhandling.py .
 cp maximilian/dbp.txt .
