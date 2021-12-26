@@ -19,25 +19,37 @@ def parse_version(versionstring):
     version.major, version.minor, version.patch = [int(i) for i in versionstring.replace('a','').split('.')]
     return version
 
+def load_config():
+    config = {}
+    #Uncomment the following line to suppress KeyErrors. This may break stuff.
+    #import collections; config = collections.defaultdict(lambda: None)
+    with open('config', 'r') as configfile:
+        for i in configfile.readlines():
+            if not i.strip().startswith('#'):
+                i = i.strip().split(':',1)
+                config[i[0]] = i[1]
+    return config
+
 logging.basicConfig(level=logging.INFO)
 print("starting...")
+config = load_config()
 intents = discord.Intents.default()
 intents.reactions = True
 intents.guilds = True
 intents.members = True
-bot = commands.Bot(help_command=helpcommand.HelpCommand(), command_prefix="+", owner_id=538193752913608704, intents=intents, activity=discord.Activity(type=discord.ActivityType.playing, name="starting up..."))
+bot = commands.Bot(help_command=helpcommand.HelpCommand(), command_prefix="+", owner_id=int(config['owner_id']), intents=intents, activity=discord.Activity(type=discord.ActivityType.playing, name="starting up..."))
 bot.start_time = time.time()
 bot.logger = logging.getLogger('jmmith')
 bot.dbip = 'localhost'
 bot.messages = []
 bot.database = "maximilian"
-bot.dbinst = common.db(bot)
+bot.dbinst = common.db(bot, config['dbp'])
 try:
     bot.dbinst.connect(bot.database)
 except pymysql.err.OperationalError:
     bot.logger.critical(f"Couldn't connect to a local database. Trying 10.0.0.51")
     bot.dbip = '10.0.0.51'
-    bot.dbinst = common.db(bot)
+    bot.dbinst = common.db(bot, config['dbp'])
     bot.dbinst.connect(bot.database)
 bot.cache_lock = asyncio.Lock()
 bot.itercount = 0
@@ -68,6 +80,7 @@ async def add_to_cache(channel):
     #purge anything from this channel that's already in cache
     if bot.initial_caching:
         progress_bar(bot.messagecount, 1000, 50, f"#{channel.name}  Fetching history...")
+    print("\n")
     history = await channel.history(limit=None, oldest_first=True).flatten()
     messages = []
     for message in history:
@@ -88,7 +101,10 @@ async def add_to_cache(channel):
     print("\n Done adding channel to cache.")
     bot.messagecount = 1
     bot.itercount += 1
-    print(f'{bot.itercount}/{len(bot.guilds[0].text_channels)+len(bot.guilds[0].threads)} channels cached')
+    total = len(bot.guilds[0].text_channels)
+    if bot.IS_DPY_2:
+        total += len(bot.guilds[0].threads)
+    print(f'{bot.itercount}/{total} channels cached')
     #be polite and wait for a bit before releasing the lock
     await asyncio.sleep(15)
 
@@ -100,7 +116,7 @@ async def update_cache():
     async with bot.cache_lock:
         for i in bot.guilds[0].text_channels:
             await add_to_cache(i)
-        if bot_IS_DPY_2:
+        if bot.IS_DPY_2:
             for i in bot.guilds[0].threads:
                 await add_to_cache(i)
 
@@ -179,4 +195,4 @@ async def on_raw_reaction_add(payload):
                 await add_to_jmmboard(payload, message, channel, starboardchannel, guild, True)
                 break
 
-bot.run(common.token().get('token.txt'))
+bot.run(config['token'])
