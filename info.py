@@ -2,21 +2,28 @@ import typing
 import discord
 from discord.ext import commands
 import contextlib
+import time
 
 class info(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.bot.AWARDS = {1:'<:gold_bimm:896479698878615552> (1)', 2:':second_place:', 3:':third_place:'}
-    
+        self.delay = 0
+        #if self.bot.config['USE_CUSTOM_EMOJI']:
+            #self.bot.AWARDS[1] = '<:gold_bimm:896479698878615552> (1)'
+
     async def convert_to_member(self, ctx, arg):
         try:
             return await commands.MemberConverter().convert(ctx, arg)
         except commands.errors.MemberNotFound:
             return None
 
+#TODO: cache jmmmapping so we don't need to do this on demand (it's slow)
     async def get_jmms(self):
         '''Gets jmmboard data for every user'''
         jmmmapping = {}
+        start = time.time()
+        #step one: calculate total messages and reactions
         for message in self.bot.messages:
             try:
                 jmmmapping[str(message.author)]
@@ -32,6 +39,7 @@ class info(commands.Cog):
                         if i.count >= 3:
                             jmmmapping[str(message.author)]['draobmmjmessages'] += 1
                         jmmmapping[str(message.author)]['draobmmjreactions'] += i.count
+        #step two: calculate stats based on those reactions
         for i in list(jmmmapping.keys()):
             jmmmapping[i]['jmmscore'] = jmmmapping[i]['reactions']-jmmmapping[i]['draobmmjreactions']
             if not jmmmapping[i]['reactions'] and not jmmmapping[i]['draobmmjreactions']:
@@ -40,9 +48,11 @@ class info(commands.Cog):
                 jmmmapping[i]['positivity'] = 0
             else:
                 jmmmapping[i]['positivity'] = round((jmmmapping[i]['reactions']/(jmmmapping[i]['reactions']+jmmmapping[i]['draobmmjreactions']))*100,1)
-        return jmmmapping
+    self.delay = time.time()-start    
+    return jmmmapping
 
     async def get_most_jmms(self, user):
+        start = time.time()
         jmms = []
         for message in self.bot.messages:
             if str(message.author) != user:
@@ -52,6 +62,7 @@ class info(commands.Cog):
                     if i.emoji.id == 774445538409054218:
                         if i.count >= 1:
                             jmms.append({'message':message, 'reactions':i.count})
+        self.delay = time.time()-start
         return jmms
 
     def get_messages(self, m):
@@ -108,8 +119,9 @@ class info(commands.Cog):
             user = ret
         else:
             user = ctx.author
+        if self.delay >= 1:
+            await ctx.send("Fetching jmmboard data...")
         most_jmmed = await self.get_most_jmms(str(user))
-        print(most_jmmed)
         most_jmmed.sort(key=self.get_reactions_alt, reverse=True)
         if not most_jmmed:
             return await ctx.send("It doesn't look like you have any golden jmms on your messages.")
@@ -142,6 +154,8 @@ class info(commands.Cog):
                 total += len(self.bot.guilds[0].threads)
             return await ctx.send(f"The message cache isn't ready yet. Try again later. \n{self.bot.itercount}/{total} channels have been cached.")
         key = self.get_key(ctx.guild.id)
+        if self.delay >= 1:
+            await ctx.send("Fetching leaderboard data...")
         jmmmapping = await self.get_jmms()
         leaderboard = sorted(list(jmmmapping.items()), key=lambda m: (key(m), self.get_messages(m)), reverse=True)
         desc = f"**Currently sorted by *{key.__name__.replace('get_','')}***.\n**Showing places {limit[0]+1} through {limit[1]}. (out of {len(leaderboard)})**\n"
@@ -173,6 +187,8 @@ class info(commands.Cog):
         else:
             user = ctx.author
         key = self.get_key(ctx.guild.id)
+        if self.delay >= 1:
+            await ctx.send(f"Looking up stats for {user}...")
         jmmmapping = await self.get_jmms()
         leaderboard = sorted(list(jmmmapping.items()), key=lambda m: (key(m), self.get_messages(m)), reverse=True)
         try:
