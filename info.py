@@ -19,7 +19,7 @@ class info(commands.Cog):
             return None
 
 #TODO: cache jmmmapping so we don't need to do this on demand (it's slow)
-    async def get_jmms(self):
+    async def get_jmmmapping(self):
         '''Gets jmmboard data for every user'''
         jmmmapping = {}
         start = time.time()
@@ -48,8 +48,8 @@ class info(commands.Cog):
                 jmmmapping[i]['positivity'] = 0
             else:
                 jmmmapping[i]['positivity'] = round((jmmmapping[i]['reactions']/(jmmmapping[i]['reactions']+jmmmapping[i]['draobmmjreactions']))*100,1)
-    self.delay = time.time()-start    
-    return jmmmapping
+        self.delay = time.time()-start    
+        return jmmmapping
 
     async def get_most_jmms(self, user):
         start = time.time()
@@ -68,7 +68,7 @@ class info(commands.Cog):
     def get_messages(self, m):
         return m[1]['messages']
     
-    def get_reactions(self, m):
+    def get_jmms(self, m):
         return m[1]['reactions']
 
     def get_jmmscore(self, m):
@@ -77,7 +77,7 @@ class info(commands.Cog):
     def get_positivity(self, m):
         return m[1]['positivity']
 
-    def get_reactions_alt(self, m):
+    def get_jmms_alt(self, m):
         return m['reactions']
 
     def get_award(self, num):
@@ -98,7 +98,7 @@ class info(commands.Cog):
     def get_key(self, guild_id):
         '''Returns a key to sort jmmmapping by. The key returned is determined by what settings are enabled.'''
         if self.is_enabled('sort by jmms', guild_id):
-            return self.get_reactions
+            return self.get_jmms
         elif self.is_enabled('sort by jmmscore', guild_id):
             return self.get_jmmscore
         elif self.is_enabled('sort by positivity', guild_id):
@@ -122,7 +122,7 @@ class info(commands.Cog):
         if self.delay >= 1:
             await ctx.send("Fetching jmmboard data...")
         most_jmmed = await self.get_most_jmms(str(user))
-        most_jmmed.sort(key=self.get_reactions_alt, reverse=True)
+        most_jmmed.sort(key=self.get_jmms_alt, reverse=True)
         if not most_jmmed:
             return await ctx.send("It doesn't look like you have any golden jmms on your messages.")
         desc = ""
@@ -156,7 +156,7 @@ class info(commands.Cog):
         key = self.get_key(ctx.guild.id)
         if self.delay >= 1:
             await ctx.send("Fetching leaderboard data...")
-        jmmmapping = await self.get_jmms()
+        jmmmapping = await self.get_jmmmapping()
         leaderboard = sorted(list(jmmmapping.items()), key=lambda m: (key(m), self.get_messages(m)), reverse=True)
         desc = f"**Currently sorted by *{key.__name__.replace('get_','')}***.\n**Showing places {limit[0]+1} through {limit[1]}. (out of {len(leaderboard)})**\n"
         for value in leaderboard[limit[0]:limit[1]]:
@@ -189,7 +189,7 @@ class info(commands.Cog):
         key = self.get_key(ctx.guild.id)
         if self.delay >= 1:
             await ctx.send(f"Looking up stats for {user}...")
-        jmmmapping = await self.get_jmms()
+        jmmmapping = await self.get_jmmmapping()
         leaderboard = sorted(list(jmmmapping.items()), key=lambda m: (key(m), self.get_messages(m)), reverse=True)
         try:
             current = (str(user), jmmmapping[str(user)])
