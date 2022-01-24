@@ -1,3 +1,25 @@
+echo "Checking for updates..."
+initial="$(git rev-parse --short HEAD)"
+git pull --quiet
+ret=$?
+after="$(git rev-parse --short HEAD)"
+if [ $ret != 0 ]
+then
+    echo ""
+    echo "Something went wrong while checking for updates. "
+if [ "$initial" != "$after" ]
+then
+    echo ""
+    echo "Update applied. Restarting setup..."
+    sleep 1
+    bash setup.sh
+    exit
+else
+    echo ""
+    echo "No updates available. Starting setup."
+    sleep 1
+fi
+
 if [ "$1" == "update" ]
 then
     update="true"
