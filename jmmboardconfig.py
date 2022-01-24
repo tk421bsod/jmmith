@@ -13,8 +13,8 @@ class settings(commands.Cog):
         self.bot = bot
         self.bot.settings = {}
         #mapping of setting name to description
-        self.settingdescmapping = {"sort by jmms":"Sort 'leaderboard' by total golden jmms recieved", "show draobmmj":"Show draobmmj information in 'stats' and 'leaderboard'", "sort by jmmscore":"Sort 'leaderboard' by jmmscore", "sort by positivity":"Sort 'leaderboard' by percent of positive reactions on messages"}
-        self.unusablewithmapping = {"sort by jmms":["sort by jmmscore", "sort by positivity"], "show draobmmj":None, "sort by jmmscore":["sort by jmms", "sort by positivity"], "sort by positivity":["sort by jmms", "sort by jmmscore"]}
+        self.settingdescmapping = {"sort by jmms":"Sort 'leaderboard' by total golden jmms recieved", "show draobmmj":"Show draobmmj information in 'stats' and 'leaderboard'", "sort by jmmscore":"Sort 'leaderboard' by jmmscore", "sort by positivity":"Sort 'leaderboard' by percent of positive reactions on messages", "use custom emoji":"Show custom emoji in certain messages"}
+        self.unusablewithmapping = {"sort by jmms":["sort by jmmscore", "sort by positivity"], "show draobmmj":None, "sort by jmmscore":["sort by jmms", "sort by positivity"], "sort by positivity":["sort by jmms", "sort by jmmscore"], "use custom emoji":None}
         self.logger = logging.getLogger(name="cogs.config")
         self.unusablewithmessage = ""
         if load:
@@ -61,14 +61,17 @@ class settings(commands.Cog):
                 self.bot.dbinst.exec_safe_query(self.bot.database, "insert into jmmboardconfig values(%s, %s, %s)", (ctx.guild.id, setting, True))
         else:
             self.bot.dbinst.exec_safe_query(self.bot.database, "update jmmboardconfig set enabled=%s where guild_id=%s and setting=%s", (not self.bot.settings[setting][ctx.guild.id], ctx.guild.id, setting))
+        self.bot.settings[setting][ctx.guild.id] = not self.bot.settings[setting][ctx.guild.id]
 
     async def prepare_conflict_string(self, conflicts):
+        '''Prepares a string of conflicts from a list (e.g `*show draobmmj* and *sort by jmms*`)'''
         q = "'"
         if not isinstance(conflicts, list):
             return f"{q}*{conflicts}*{q}"
         return f"{', '.join([f'{q}*{i}*{q}' for i in conflicts[:-1]])} and '*{conflicts[-1]}*'"
 
     async def resolve_conflicts(self, ctx, setting):
+        '''Resolves conflicts between settings.'''
         if isinstance(self.unusablewithmapping[setting], list):
             resolved = []
             for conflict in self.unusablewithmapping[setting]:
@@ -82,17 +85,21 @@ class settings(commands.Cog):
             else:
                 self.unusablewithmessage = ""
                 return
-        if len(resolved) == 1:
-            resolved = resolved[0]
         if not resolved:
             self.unusablewithmessage = ""
             return
+        if len(resolved) == 1:
+            resolved = resolved[0]
         self.unusablewithmessage = f"**Automatically disabled** {await self.prepare_conflict_string(resolved)} due to a conflict."
 
     #customizable permissions when
     @commands.command()
     async def config(self, ctx, *, setting=None):
         '''Toggles the specified setting. Settings are off by default.'''
+        if self.bot.USE_CUSTOM_EMOJI or self.is_enabled("use custom emoji"):
+            X = "<:red_x:813135049083191307>"
+        else:
+            X = "❎"
         if not setting:
             embed = discord.Embed(title="Settings", color=0xFDFE00)
             for key, value in list(self.bot.settings.items()):
@@ -102,13 +109,14 @@ class settings(commands.Cog):
                         unusablewithwarning = f"Cannot be enabled at the same time as {await self.prepare_conflict_string(unusablewith)}"
                     else:
                         unusablewithwarning = ""
-                    embed.add_field(name=f"{discord.utils.remove_markdown(self.settingdescmapping[key].capitalize())} ({key})", value=f"{'<:red_x:813135049083191307> Disabled' if not value[ctx.guild.id] else '✅ Enabled'}\n{unusablewithwarning} ", inline=True)
+                    embed.add_field(name=f"{discord.utils.remove_markdown(self.settingdescmapping[key].capitalize())} ({key})", value=f"{f'{x} Disabled' if not value[ctx.guild.id] else '✅ Enabled'}\n{unusablewithwarning} ", inline=True)
             embed.set_footer(text="If you want to toggle a setting, run this command again and specify the name of the setting. Setting names are shown above in parentheses. Settings that change the sorting of 'leaderboard' also affect 'stats'.")
             return await ctx.send(embed=embed)
         try:
             self.bot.settings[setting]
         except KeyError:
             return await ctx.send("That setting doesn't exist. Check the spelling.")
+        self.changed = [setting]
         try:
             #update setting state
             await self.update_setting(ctx, setting)
@@ -116,10 +124,7 @@ class settings(commands.Cog):
             await self.resolve_conflicts(ctx, setting)
         except:
             await self.bot.get_user(self.bot.owner_id).send(traceback.format_exc())
-            return await ctx.send(f"<:blobpain:822921526629236797> Something went wrong while changing that setting. Try again in a moment. \n<:blobpeek:846768868738596924> I've reported this error to tk421.")
-        #probably should manually add to cache instead
-        #(this is because manually adding one entry to cache is O(1) while running update_settings_cache is O(n^2) where n is len(bot.guilds))
-        await self.fill_settings_cache()
+            return await ctx.send(f"Something went wrong while changing that setting. Try again in a moment. \nI've reported this error to my owner.")
         await ctx.send(embed=discord.Embed(title="Changes saved.", description=f"**{'Disabled' if not self.bot.settings[setting][ctx.guild.id] else 'Enabled'}** *{self.settingdescmapping[setting]}*.\n{self.unusablewithmessage}", color=0xFDFE00).set_footer(text=f"Send this command again to turn this back {'off' if self.bot.settings[setting][ctx.guild.id] else 'on'}."))
 
 def setup(bot):
