@@ -1,4 +1,12 @@
-if [ -f token.txt ]
+if [ "$1" == "update" ]
+then
+    update="true"
+    echo "Updating Jmmith with new Maximilian components."
+else
+    update="false"
+fi
+
+if [ -f token.txt -a "$update" == "false" ]
 then
     echo " ---- WARNING ---- "
     echo "It looks like you've been using an older version of setup.sh. The configuration data format has changed, so you'll need to re-enter the token and database password. Don't continue until you have those ready."
@@ -15,7 +23,7 @@ then
     echo ""
 fi
 
-if [ -f config ];
+if [ -f config -a "$update" == "false" ];
 then
     echo " ---- WARNING ---- "
     echo "It looks like you've already run setup.sh."
@@ -39,9 +47,11 @@ then
         exit 1
     fi
 fi
-
-echo "---- Jmmith Setup ----"
-echo "This script helps set up Jmmith. It runs Maximilian's setup script, then does a few extra steps."
+if [ "$update" == "false" ]
+then
+    echo "---- Jmmith Setup ----"
+    echo "This script helps set up Jmmith. It runs Maximilian's setup script, then does a few extra steps."
+fi
 echo "Cloning Maximilian..."
 echo ""
 if [ -d maximilian ]
@@ -51,22 +61,26 @@ then
     git pull
     cd ..
 else
-    git clone https://github.com/tk421bsod/maximilian
+    git clone --branch minimal https://github.com/tk421bsod/maximilian
 fi
-echo ""
-echo "Running Maximilian's setup.sh... Follow the prompts it gives you."
-echo ""
-cd maximilian
-sleep 1
-bash setup.sh
-result=$?
-cd ..
-echo ""
-if [ $result != 0 ]
+if [ "$update" == "false" ]
 then
-    echo "Maximilian's setup exited unexpectedly. Try running this again."
-    exit 37
+    echo ""
+    echo "Running Maximilian's setup.sh... Follow the prompts it gives you."
+    echo ""
+    cd maximilian
+    sleep 1
+    bash setup.sh
+    result=$?
+    cd ..
+    echo ""
+    if [ $result != 0 ]
+    then
+        echo "Maximilian's setup exited unexpectedly. Try running this again."
+        exit 37
+    fi
 fi
+
 echo "Moving some Maximilian components here..."
 cp maximilian/common.py .
 cp maximilian/errorhandling.py .
@@ -74,8 +88,64 @@ cp maximilian/config .
 cp maximilian/helpcommand.py .
 cp maximilian/core.py .
 cp maximilian/errors.py .
+echo "Done."
+
+if [ "$update" == "false" ]
+then
+    echo ""
+    echo "Enter the ID of the channel you want to use as the jmmboard."
+    read jmmboard
+    echo "jmmboard_channel:$jmmboard" >> config
+
+    echo ""
+    echo "Do you want to enable the draobmmj? yes/no"
+    read draobmmj_enabled
+    if [ ${draobmmj_enabled^^} == "YES" ]
+    then
+        echo "Enter the ID of the channel you want to use as the draobmmj."
+        read draobmmj
+        echo "draobmmj_enabled:1" >> config
+        echo "draobmmj_channel:$draobmmj" >> config
+    else
+        echo "draobmmj_enabled:0" >> config
+        echo "Not enabling the draobmmj"
+    fi
+
+    echo "Do you want to enable custom emoji?"
+    echo "Read the following carefully, as your choice will greatly affect Jmmith."
+    echo "Answering 'yes' will prompt you for each custom emoji Jmmith uses."
+    echo "You'll need to enter the emoji in the correct format (<:name:id>). You can get an emoji in that format by typing a backslash before its name, e.g '\:gold_jmm:' = '<:gold_jmm:38347567382657>'"
+echo "Answering 'no' will make Jmmith use a predefined set of built-in emoji."
+read custom_emoji
+if [ ${custom_emoji^^} == "YES" ]
+then
+    echo ""
+    echo "Enabling custom emoji."
+    echo "Enter the emoji you want Jmmith to use for the jmmboard. This has to be in the format shown above."
+    read jmmboardemoji
+    echo "jmmboard_emoji:$jmmboardemoji" >> config
+    sed -i 's/custom_emoji:0/custom_emoji:1/' test
+    if [ ${draobmmj_enabled^^} == "YES" ]
+    then
+        echo "One more thing: Enter the emoji you want Jmmith to use for the draobmmj. Again, this has to be in the format shown above."
+        read draobmmj_emoji
+        echo "draobmmj_emoji:$draobmmj_emoji" >> config
+    else
+        echo "draobmmj isn't enabled, skipping"
+        echo "draobmmj_emoji:0" >> config
+    fi
+else
+    echo ""
+    echo "Disabling custom emoji."
+    echo "jmmboard_emoji:0" >> config
+    echo "draobmmj_emoji:0" >> config
+fi
+
 echo "Finishing database setup..."
-sudo mysql maximilian -Be "CREATE TABLE jmmboard(message_id bigint); CREATE TABLE draobmmj(message_id bigint); CREATE TABLE jmmboardconfig(guild_id bigint, setting text, enabled tinyint); "
+sudo mysql maximilian -Be "CREATE TABLE jmmboard(message_id bigint); CREATE TABLE draobmmj(message_id bigint); CREATE TABLE jmmboardconfig(guild_id bigint, setting text, enabled tinyint); CREATE TABLE blocked(user_id bigint);"
 echo "Cleaning up..."
 rm -rf maximilian
 echo "Done. Try running main.py. If you want Jmmith to work in threads, install discord.py 2.0 (instructions are at https://github.com/rapptz/discord.py/blob/master/README.rst)"
+else
+rm -rf maximilian
+fi
