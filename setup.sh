@@ -1,12 +1,21 @@
+
 echo "Checking for updates..."
 initial="$(git rev-parse --short HEAD)"
-git pull --quiet
+git pull > /dev/null 2>&1
 ret=$?
+#try https if the initial pull failed (e.g ssh blocked)
+if [ $ret != 0 ]
+then
+    git pull https://github.com/tk421bsod/jmmith main > /dev/null 2>&1
+    ret=$?
+fi
 after="$(git rev-parse --short HEAD)"
 if [ $ret != 0 ]
 then
     echo ""
-    echo "Something went wrong while checking for updates. "
+    echo "Something went wrong while checking for updates. If you've made local changes, use `git status` to view what files need to be committed."
+fi
+
 if [ "$initial" != "$after" ]
 then
     echo ""
@@ -18,12 +27,14 @@ else
     echo ""
     echo "No updates available. Starting setup."
     sleep 1
+    echo ""
 fi
 
 if [ "$1" == "update" ]
 then
     update="true"
     echo "Updating Jmmith with new Maximilian components."
+    echo ""
 else
     update="false"
 fi
