@@ -96,10 +96,10 @@ class settings(commands.Cog):
     @commands.command()
     async def config(self, ctx, *, setting=None):
         '''Toggles the specified setting. Settings are off by default.'''
-        #if self.bot.USE_CUSTOM_EMOJI or self.is_enabled("use custom emoji"):
-        X = "<:red_x:813135049083191307>"
-        #else:
-            #X = "❎"
+        if self.is_enabled("use custom emoji"):
+            X = "<:red_x:813135049083191307>"
+        else:
+            X = "❎"
         if not setting:
             embed = discord.Embed(title="Settings", color=0xFDFE00)
             for key, value in list(self.bot.settings.items()):
@@ -109,7 +109,7 @@ class settings(commands.Cog):
                         unusablewithwarning = f"Cannot be enabled at the same time as {await self.prepare_conflict_string(unusablewith)}"
                     else:
                         unusablewithwarning = ""
-                    embed.add_field(name=f"{discord.utils.remove_markdown(self.settingdescmapping[key].capitalize())} ({key})", value=f"{f'{x} Disabled' if not value[ctx.guild.id] else '✅ Enabled'}\n{unusablewithwarning} ", inline=True)
+                    embed.add_field(name=f"{discord.utils.remove_markdown(self.settingdescmapping[key].capitalize())} ({key})", value=f"{f'{X} Disabled' if not value[ctx.guild.id] else '✅ Enabled'}\n{unusablewithwarning} ", inline=True)
             embed.set_footer(text="If you want to toggle a setting, run this command again and specify the name of the setting. Setting names are shown above in parentheses. Settings that change the sorting of 'leaderboard' also affect 'stats'.")
             return await ctx.send(embed=embed)
         try:
