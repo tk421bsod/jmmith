@@ -92,11 +92,18 @@ class settings(commands.Cog):
             resolved = resolved[0]
         self.unusablewithmessage = f"**Automatically disabled** {await self.prepare_conflict_string(resolved)} due to a conflict."
 
+    def is_enabled(self, setting, guild_id):
+        '''Returns whether a setting is enabled'''
+        try:
+            return self.bot.settings[setting][guild_id]
+        except KeyError:
+            return False
+
     #customizable permissions when
     @commands.command()
     async def config(self, ctx, *, setting=None):
         '''Toggles the specified setting. Settings are off by default.'''
-        if self.is_enabled("use custom emoji"):
+        if self.is_enabled("use custom emoji", ctx.guild.id):
             X = "<:red_x:813135049083191307>"
         else:
             X = "❎"
