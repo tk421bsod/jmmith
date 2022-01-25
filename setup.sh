@@ -13,7 +13,7 @@ after="$(git rev-parse --short HEAD)"
 if [ $ret != 0 ]
 then
     echo ""
-    echo "Something went wrong while checking for updates. If you've made local changes, use `git status` to view what files need to be committed."
+    echo "Something went wrong while checking for updates. If you've made local changes, use 'git status' to view what files need to be committed."
 fi
 
 if [ "$initial" != "$after" ]
@@ -21,7 +21,7 @@ then
     echo ""
     echo "Update applied. Restarting setup..."
     sleep 1
-    bash setup.sh
+    bash setup.sh $1
     exit
 else
     echo ""
