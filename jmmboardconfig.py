@@ -13,8 +13,8 @@ class settings(commands.Cog):
         self.bot = bot
         self.bot.settings = {}
         #mapping of setting name to description
-        self.settingdescmapping = {"sort by jmms":"Sort 'leaderboard' by total golden jmms recieved", "show draobmmj":"Show draobmmj information in 'stats' and 'leaderboard'", "sort by jmmscore":"Sort 'leaderboard' by jmmscore", "sort by positivity":"Sort 'leaderboard' by percent of positive reactions on messages", "use custom emoji":"Show custom emoji in certain messages"}
-        self.unusablewithmapping = {"sort by jmms":["sort by jmmscore", "sort by positivity"], "show draobmmj":None, "sort by jmmscore":["sort by jmms", "sort by positivity"], "sort by positivity":["sort by jmms", "sort by jmmscore"], "use custom emoji":None}
+        self.settingdescmapping = {"sort by jmms":"Sort 'leaderboard' by total golden jmms recieved", "show draobmmj":"Show draobmmj information in 'stats' and 'leaderboard'", "sort by jmmscore":"Sort 'leaderboard' by jmmscore", "sort by positivity":"Sort 'leaderboard' by percent of positive reactions on messages"}
+        self.unusablewithmapping = {"sort by jmms":["sort by jmmscore", "sort by positivity"], "show draobmmj":None, "sort by jmmscore":["sort by jmms", "sort by positivity"], "sort by positivity":["sort by jmms", "sort by jmmscore"]}
         self.logger = logging.getLogger(name="cogs.config")
         self.unusablewithmessage = ""
         if load:
@@ -22,6 +22,7 @@ class settings(commands.Cog):
             self.logger.debug("Created a task for filling the setting cache")
 
     async def fill_settings_cache(self):
+        '''Fills the settings cache with data'''
         self.logger.info("Filling settings cache...")
         await self.bot.wait_until_ready()
         try:
@@ -57,6 +58,7 @@ class settings(commands.Cog):
         self.logger.info("Done filling settings cache.")
         
     async def update_setting(self, ctx, setting):
+        '''Updates a setting's state in both the database and cache'''
         if not self.bot.dbinst.exec_safe_query(self.bot.database, "select * from jmmboardconfig where guild_id=%s", (ctx.guild.id)):
                 self.bot.dbinst.exec_safe_query(self.bot.database, "insert into jmmboardconfig values(%s, %s, %s)", (ctx.guild.id, setting, True))
         else:
@@ -71,7 +73,7 @@ class settings(commands.Cog):
         return f"{', '.join([f'{q}*{i}*{q}' for i in conflicts[:-1]])} and '*{conflicts[-1]}*'"
 
     async def resolve_conflicts(self, ctx, setting):
-        '''Resolves conflicts between settings.'''
+        '''Resolves conflicts between settings'''
         if isinstance(self.unusablewithmapping[setting], list):
             resolved = []
             for conflict in self.unusablewithmapping[setting]:
@@ -103,10 +105,6 @@ class settings(commands.Cog):
     @commands.command()
     async def config(self, ctx, *, setting=None):
         '''Toggles the specified setting. Settings are off by default.'''
-        if self.is_enabled("use custom emoji", ctx.guild.id):
-            X = "<:red_x:813135049083191307>"
-        else:
-            X = "❎"
         if not setting:
             embed = discord.Embed(title="Settings", color=0xFDFE00)
             for key, value in list(self.bot.settings.items()):
@@ -116,14 +114,13 @@ class settings(commands.Cog):
                         unusablewithwarning = f"Cannot be enabled at the same time as {await self.prepare_conflict_string(unusablewith)}"
                     else:
                         unusablewithwarning = ""
-                    embed.add_field(name=f"{discord.utils.remove_markdown(self.settingdescmapping[key].capitalize())} ({key})", value=f"{f'{X} Disabled' if not value[ctx.guild.id] else '✅ Enabled'}\n{unusablewithwarning} ", inline=True)
+                    embed.add_field(name=f"{discord.utils.remove_markdown(self.settingdescmapping[key].capitalize())} ({key})", value=f"{f'<:red_x:813135049083191307> Disabled' if not value[ctx.guild.id] else '✅ Enabled'}\n{unusablewithwarning} ", inline=True)
             embed.set_footer(text="If you want to toggle a setting, run this command again and specify the name of the setting. Setting names are shown above in parentheses. Settings that change the sorting of 'leaderboard' also affect 'stats'.")
             return await ctx.send(embed=embed)
         try:
             self.bot.settings[setting]
         except KeyError:
             return await ctx.send("That setting doesn't exist. Check the spelling.")
-        self.changed = [setting]
         try:
             #update setting state
             await self.update_setting(ctx, setting)
