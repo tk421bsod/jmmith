@@ -96,10 +96,10 @@ class settings(commands.Cog):
     @commands.command()
     async def config(self, ctx, *, setting=None):
         '''Toggles the specified setting. Settings are off by default.'''
-        if self.bot.USE_CUSTOM_EMOJI or self.is_enabled("use custom emoji"):
-            X = "<:red_x:813135049083191307>"
-        else:
-            X = "❎"
+        #if self.bot.USE_CUSTOM_EMOJI or self.is_enabled("use custom emoji"):
+        X = "<:red_x:813135049083191307>"
+        #else:
+            #X = "❎"
         if not setting:
             embed = discord.Embed(title="Settings", color=0xFDFE00)
             for key, value in list(self.bot.settings.items()):
