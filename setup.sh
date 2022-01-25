@@ -21,7 +21,12 @@ then
     echo ""
     echo "Update applied. Restarting setup..."
     sleep 1
-    bash setup.sh $1
+    if [ "$1" == "update" ]
+    then
+        bash setup.sh update
+    else
+        bash setup.sh
+    fi
     exit
 else
     echo ""
