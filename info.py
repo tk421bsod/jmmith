@@ -136,7 +136,7 @@ class info(commands.Cog):
             desc += f"{i['reactions']} gold jmms: [Go to message]({i['message'].jump_url})\n"
         await ctx.send(embed=discord.Embed(title=f"{user}'s most golden jmmed messages:", description=desc, color=0xFDFE00))
 
-    @commands.command(hidden=True, aliases=['demmjtsom', 'negativegoldjmms', 'mostjmmednt'])
+    @commands.command(hidden=True, aliases=['demmjtsom', 'negativegoldjmms', 'mostjmmednt', 'mostcursed'])
     async def mostunjmmed(self, ctx, *, user=None):
         if self.bot.cache_lock.locked() and self.bot.initial_caching == True:
             total = len(self.bot.guilds[0].text_channels)
