@@ -51,7 +51,7 @@ class info(commands.Cog):
         self.delay = time.time()-start    
         return jmmmapping
 
-    async def get_most_jmms(self, user):
+    async def get_most_jmms(self, user, draobmmj=False):
         start = time.time()
         jmms = []
         for message in self.bot.messages:
@@ -59,7 +59,10 @@ class info(commands.Cog):
                 continue
             for i in message.reactions: 
                 if hasattr(i.emoji, 'id'):
-                    if i.emoji.id == 774445538409054218:
+                    if i.emoji.id == 774445538409054218 and not draobmmj:
+                        if i.count >= 1:
+                            jmms.append({'message':message, 'reactions':i.count})
+                    if i.emoji.id == 74389012 and draobmmj:
                         if i.count >= 1:
                             jmms.append({'message':message, 'reactions':i.count})
         self.delay = time.time()-start
