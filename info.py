@@ -15,7 +15,7 @@ class info(commands.Cog):
     async def convert(self, ctx, arg):
         return await commands.MemberConverter().convert(ctx, arg)
 
-    async def convert_to_member(self, ctx, user)
+    async def convert_to_member(self, ctx, user):
         if user:
             user = await self.convert(ctx, user)
         else:
@@ -231,9 +231,9 @@ class info(commands.Cog):
             embed.add_field(name="nogoldjmms recieved:", value=str(current[1]['draobmmjreactions']))
         with contextlib.suppress(IndexError):
             if place <= len(leaderboard)+1:
-                embed.add_field(name="Ahead of:", value=f"{leaderboard[place+1][0]} (with {leaderboard[place+1][1]['messages']} messages on the jmmboard, {leaderboard[place+1][1]['reactions']} golden jmms recieved, and a jmmscore of {leaderboard[place+1][1]['jmmscore']})", inline=False)
+                embed.add_field(name="Ahead of:", value=f"{leaderboard[place+1][0]} (with {leaderboard[place+1][1]['messages']} messages on the jmmboard, {leaderboard[place+1][1]['reactions']} golden jmms recieved, a jmmscore of {leaderboard[place+1][1]['jmmscore']}, and {leaderboard[place-1][1]['positivity']}% positive reactions)", inline=False)
             if place > 0:
-                embed.add_field(name="Behind:", value=f"{leaderboard[place-1][0]} (with {leaderboard[place-1][1]['messages']} messages on the jmmboard, {leaderboard[place-1][1]['reactions']} golden jmms recieved, and a jmmscore of {leaderboard[place-1][1]['jmmscore']})", inline=False)
+                embed.add_field(name="Behind:", value=f"{leaderboard[place-1][0]} (with {leaderboard[place-1][1]['messages']} messages on the jmmboard, {leaderboard[place-1][1]['reactions']} golden jmms recieved, a jmmscore of {leaderboard[place-1][1]['jmmscore']}, and {leaderboard[place-1][1]['positivity']}% positive reactions)", inline=False)
         await ctx.send(embed=embed)
 
 def setup(bot):
