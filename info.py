@@ -12,11 +12,15 @@ class info(commands.Cog):
         #if self.bot.config['USE_CUSTOM_EMOJI']:
             #self.bot.AWARDS[1] = '<:gold_bimm:896479698878615552> (1)'
 
-    async def convert_to_member(self, ctx, arg):
-        try:
-            return await commands.MemberConverter().convert(ctx, arg)
-        except commands.errors.MemberNotFound:
-            return None
+    async def convert(self, ctx, arg):
+        return await commands.MemberConverter().convert(ctx, arg)
+
+    async def convert_to_member(self, ctx, user)
+        if user:
+            user = await self.convert(ctx, user)
+        else:
+            user = ctx.author
+        return user
 
 #TODO: cache jmmmapping so we don't need to do this on demand (it's slow)
     async def get_jmmmapping(self):
@@ -115,14 +119,11 @@ class info(commands.Cog):
             if self.bot.IS_DPY_2:
                 total += len(self.bot.guilds[0].threads)
             return await ctx.send(f"The message cache isn't ready yet. Try again later. \n{self.bot.itercount}/{total} channels have been cached.")
-        if user:
-            ret = await self.convert_to_member(ctx, user)
-            if not ret:
-                return await ctx.send("I can't find that user.")
-            user = ret
-        else:
-            user = ctx.author
-        if self.delay >= 1:
+        try:
+            user = await self.convert_to_member(ctx, user)
+        except:
+            return await ctx.send("I can't find that user.")
+        if self.delay > 1:
             await ctx.send("Fetching jmmboard data...")
         most_jmmed = await self.get_most_jmms(str(user))
         most_jmmed.sort(key=self.get_jmms_alt, reverse=True)
@@ -135,6 +136,29 @@ class info(commands.Cog):
             desc += f"{i['reactions']} gold jmms: [Go to message]({i['message'].jump_url})\n"
         await ctx.send(embed=discord.Embed(title=f"{user}'s most golden jmmed messages:", description=desc, color=0xFDFE00))
 
+    @commands.command(hidden=True, aliases=['demmjtsom', 'negativegoldjmms', 'mostjmmednt'])
+    async def mostunjmmed(self, ctx, *, user=None):
+        if self.bot.cache_lock.locked() and self.bot.initial_caching == True:
+            total = len(self.bot.guilds[0].text_channels)
+            if self.bot.IS_DPY_2:
+                total += len(self.bot.guilds[0].threads)
+            return await ctx.send(f"The message cache isn't ready yet. Try again later. \n{self.bot.itercount}/{total} channels have been cached.")
+        try:
+            user = await self.convert_to_member(ctx, user)
+        except:
+            return await ctx.send("I can't find that user.")
+        if self.delay >= 1:
+            await ctx.send("Fetching draobmmj data...")
+        most_jmmed = await self.get_most_jmms(str(user), True)
+        most_jmmed.sort(key=self.get_jmms_alt, reverse=True)
+        if not most_jmmed:
+            return await ctx.send("It doesn't look like you have any nogoldjmms on your messages.")
+        desc = ""
+        for i in most_jmmed[:10]:
+            if len(desc+f"{i['reactions']} nogoldjmms: [Go to message]({i['message'].jump_url})") >= 4096:
+                break
+            desc += f"{i['reactions']} nogoldjmms: [Go to message]({i['message'].jump_url})\n"
+        await ctx.send(embed=discord.Embed(title=f"{user}'s most nogoldjmmed messages:", description=desc, color=discord.Color.dark_red()))
 
     @commands.command(hidden=True, aliases=['leaderboard', 'jmmleaderboards'])
     async def jmmleaderboard(self, ctx, limit:typing.Optional[str]=None):
@@ -182,13 +206,10 @@ class info(commands.Cog):
             if self.bot.IS_DPY_2:
                 total += len(self.bot.guilds[0].threads)
             return await ctx.send(f"The message cache isn't ready yet. Try again later. \n{self.bot.itercount}/{total} channels have been cached.")
-        if user:
-            ret = await self.convert_to_member(ctx, user)
-            if not ret:
-                return await ctx.send("I can't find that user.")
-            user = ret
-        else:
-            user = ctx.author
+        try:
+            user = await self.convert_to_member(ctx, user)
+        except:
+            return await ctx.send("I can't find that user.")
         key = self.get_key(ctx.guild.id)
         if self.delay >= 1:
             await ctx.send(f"Looking up stats for {user}...")
