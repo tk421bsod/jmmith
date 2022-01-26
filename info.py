@@ -66,7 +66,7 @@ class info(commands.Cog):
                     if i.emoji.id == 774445538409054218 and not draobmmj:
                         if i.count >= 1:
                             jmms.append({'message':message, 'reactions':i.count})
-                    if i.emoji.id == 74389012 and draobmmj:
+                    if i.emoji.id == 776612785647910933 and draobmmj:
                         if i.count >= 1:
                             jmms.append({'message':message, 'reactions':i.count})
         self.delay = time.time()-start
