@@ -29,14 +29,17 @@ class info(commands.Cog):
         start = time.time()
         while True:
             if time.time() - start >= 120:
-                return await message.clear_reaction("\U0001f5d1")
+                await message.clear_reaction("\U0001f5d1")
+                return False
             try:
                 reaction = await self.bot.wait_for('reaction_add', timeout=120.0)
             except asyncio.TimeoutError:
-                return await message.clear_reaction("\U0001f5d1")
+                await message.clear_reaction("\U0001f5d1")
+                return False
             users = await reaction[0].users().flatten()
             if message.author in users and reaction[0].message.id == message.id:
-                return await message.delete()
+                await message.delete()
+                return True
 
 #TODO: cache jmmmapping so we don't need to do this on demand (it's slow)
     async def get_jmmmapping(self):
@@ -140,7 +143,9 @@ class info(commands.Cog):
         except:
             return await ctx.send("I can't find that user.")
         if self.delay > 1:
-            await ctx.send("Fetching jmmboard data...")
+            loading = await ctx.send("Fetching jmmboard data...")
+        else:
+            loading = None
         most_jmmed = await self.get_most_jmms(str(user))
         most_jmmed.sort(key=self.get_jmms_alt, reverse=True)
         if not most_jmmed:
@@ -151,7 +156,9 @@ class info(commands.Cog):
                 break
             desc += f"{i['reactions']} gold jmms: [Go to message]({i['message'].jump_url})\n"
         response = await ctx.send(embed=discord.Embed(title=f"{user}'s most golden jmmed messages:", description=desc, color=0xFDFE00))
-        await self.await_delete(response)
+        deleted = await self.await_delete(response)
+        if loading and deleted:
+            await loading.delete()
 
     @commands.command(hidden=True, aliases=['demmjtsom', 'negativegoldjmms', 'mostjmmednt', 'mostcursed'])
     async def mostunjmmed(self, ctx, *, user=None):
@@ -165,7 +172,9 @@ class info(commands.Cog):
         except:
             return await ctx.send("I can't find that user.")
         if self.delay >= 1:
-            await ctx.send("Fetching draobmmj data...")
+            loading = await ctx.send("Fetching draobmmj data...")
+        else:
+            loading = None
         most_jmmed = await self.get_most_jmms(str(user), True)
         most_jmmed.sort(key=self.get_jmms_alt, reverse=True)
         if not most_jmmed:
@@ -176,7 +185,9 @@ class info(commands.Cog):
                 break
             desc += f"{i['reactions']} nogoldjmms: [Go to message]({i['message'].jump_url})\n"
         response = await ctx.send(embed=discord.Embed(title=f"{user}'s most nogoldjmmed messages:", description=desc, color=discord.Color.dark_red()))
-        await self.await_delete(response)
+        deleted = await self.await_delete(response)
+        if loading and deleted:
+            await loading.delete()
 
     @commands.command(hidden=True, aliases=['leaderboard', 'jmmleaderboards'])
     async def jmmleaderboard(self, ctx, limit:typing.Optional[str]=None):
@@ -200,7 +211,9 @@ class info(commands.Cog):
             return await ctx.send(f"The message cache isn't ready yet. Try again later. \n{self.bot.itercount}/{total} channels have been cached.")
         key = self.get_key(ctx.guild.id)
         if self.delay >= 1:
-            await ctx.send("Fetching leaderboard data...")
+            loading = await ctx.send("Fetching leaderboard data...")
+        else:
+            loading = None
         jmmmapping = await self.get_jmmmapping()
         leaderboard = sorted(list(jmmmapping.items()), key=lambda m: (key(m), self.get_messages(m)), reverse=True)
         desc = f"**Currently sorted by *{key.__name__.replace('get_','')}***.\n**Showing places {limit[0]+1} through {limit[1]}. (out of {len(leaderboard)})**\n"
@@ -216,7 +229,9 @@ class info(commands.Cog):
             response = await ctx.send(embed=leaderboard)
         except discord.HTTPException:
             response = await ctx.send("<:blobpaiN:839543891518685225> I can't show what you requested. Try using a smaller limit. (or a smaller interval if you're using leaderboard slicing)")
-        await self.await_delete(response)
+        deleted = await self.await_delete(response)
+        if loading and deleted:
+            await loading.delete()
 
     @commands.command(hidden=True, aliases=['stats', 'jmmboardstats'])
     async def jmmstats(self, ctx, *, user=None):
@@ -231,7 +246,9 @@ class info(commands.Cog):
             return await ctx.send("I can't find that user.")
         key = self.get_key(ctx.guild.id)
         if self.delay >= 1:
-            await ctx.send(f"Looking up stats for {user}...")
+            loading = await ctx.send(f"Looking up stats for {user}...")
+        else:
+            loading = None
         jmmmapping = await self.get_jmmmapping()
         leaderboard = sorted(list(jmmmapping.items()), key=lambda m: (key(m), self.get_messages(m)), reverse=True)
         try:
@@ -254,7 +271,9 @@ class info(commands.Cog):
             if place > 0:
                 embed.add_field(name="Behind:", value=f"{leaderboard[place-1][0]} (with {leaderboard[place-1][1]['messages']} messages on the jmmboard, {leaderboard[place-1][1]['reactions']} golden jmms recieved, a jmmscore of {leaderboard[place-1][1]['jmmscore']}, and {leaderboard[place-1][1]['positivity']}% positive reactions)", inline=False)
         response = await ctx.send(embed=embed)
-        await self.await_delete(response)
+        deleted = await self.await_delete(response)
+        if loading and deleted:
+            await loading.delete()
 
 def setup(bot):
     bot.add_cog(info(bot))
