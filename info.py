@@ -23,7 +23,8 @@ class info(commands.Cog):
             user = ctx.author
         return user
 
-    async def await_delete(message):
+    async def await_delete(self, message):
+        await message.channel.send(message)
         await message.add_reaction("\U0001f5d1")
         await asyncio.sleep(0.5)
         start = time.time()
