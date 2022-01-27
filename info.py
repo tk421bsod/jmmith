@@ -1,3 +1,4 @@
+import asyncio
 import typing
 import discord
 from discord.ext import commands
@@ -21,6 +22,21 @@ class info(commands.Cog):
         else:
             user = ctx.author
         return user
+
+    async def await_delete(message):
+        await message.add_reaction("\U0001f5d1")
+        await asyncio.sleep(0.5)
+        start = time.time()
+        while True:
+            if time.time() - start >= 120:
+                return await message.clear_reaction("\U0001f5d1")
+            try:
+                reaction = await self.bot.wait_for('reaction_add', timeout=120.0)
+            except asyncio.TimeoutError:
+                return await message.clear_reaction("\U0001f5d1")
+            users = await reaction[0].users().flatten()
+            if message.author in users and reaction[0].message.id == message.id:
+                return await message.delete()
 
 #TODO: cache jmmmapping so we don't need to do this on demand (it's slow)
     async def get_jmmmapping(self):
@@ -134,7 +150,8 @@ class info(commands.Cog):
             if len(desc+f"{i['reactions']} gold jmms: [Go to message]({i['message'].jump_url})") >= 4096:
                 break
             desc += f"{i['reactions']} gold jmms: [Go to message]({i['message'].jump_url})\n"
-        await ctx.send(embed=discord.Embed(title=f"{user}'s most golden jmmed messages:", description=desc, color=0xFDFE00))
+        response = await ctx.send(embed=discord.Embed(title=f"{user}'s most golden jmmed messages:", description=desc, color=0xFDFE00))
+        await self.await_delete(response)
 
     @commands.command(hidden=True, aliases=['demmjtsom', 'negativegoldjmms', 'mostjmmednt', 'mostcursed'])
     async def mostunjmmed(self, ctx, *, user=None):
@@ -158,7 +175,8 @@ class info(commands.Cog):
             if len(desc+f"{i['reactions']} nogoldjmms: [Go to message]({i['message'].jump_url})") >= 4096:
                 break
             desc += f"{i['reactions']} nogoldjmms: [Go to message]({i['message'].jump_url})\n"
-        await ctx.send(embed=discord.Embed(title=f"{user}'s most nogoldjmmed messages:", description=desc, color=discord.Color.dark_red()))
+        response = await ctx.send(embed=discord.Embed(title=f"{user}'s most nogoldjmmed messages:", description=desc, color=discord.Color.dark_red()))
+        await self.await_delete(response)
 
     @commands.command(hidden=True, aliases=['leaderboard', 'jmmleaderboards'])
     async def jmmleaderboard(self, ctx, limit:typing.Optional[str]=None):
@@ -195,9 +213,10 @@ class info(commands.Cog):
                 desc += f"{award}: {value[0]} ({value[1]['messages']} messages on the jmmboard, {value[1]['reactions']} golden jmms recieved, {value[1]['draobmmjmessages']} messages on the draobmmj, {value[1]['draobmmjreactions']} nogoldjmms recieved, a jmmscore of {value[1]['reactions']-value[1]['draobmmjreactions']}, and {value[1]['positivity']}% positive reactions)\n"
         leaderboard = discord.Embed(title="Jmmboard leaderboard:", description=desc, color=0xFDFE00)
         try:
-            await ctx.send(embed=leaderboard)
+            response = await ctx.send(embed=leaderboard)
         except discord.HTTPException:
-            await ctx.send("<:blobpaiN:839543891518685225> I can't show what you requested. Try using a smaller limit. (or a smaller interval if you're using leaderboard slicing)")
+            response = await ctx.send("<:blobpaiN:839543891518685225> I can't show what you requested. Try using a smaller limit. (or a smaller interval if you're using leaderboard slicing)")
+        await self.await_delete(response)
 
     @commands.command(hidden=True, aliases=['stats', 'jmmboardstats'])
     async def jmmstats(self, ctx, *, user=None):
@@ -234,7 +253,8 @@ class info(commands.Cog):
                 embed.add_field(name="Ahead of:", value=f"{leaderboard[place+1][0]} (with {leaderboard[place+1][1]['messages']} messages on the jmmboard, {leaderboard[place+1][1]['reactions']} golden jmms recieved, a jmmscore of {leaderboard[place+1][1]['jmmscore']}, and {leaderboard[place+1][1]['positivity']}% positive reactions)", inline=False)
             if place > 0:
                 embed.add_field(name="Behind:", value=f"{leaderboard[place-1][0]} (with {leaderboard[place-1][1]['messages']} messages on the jmmboard, {leaderboard[place-1][1]['reactions']} golden jmms recieved, a jmmscore of {leaderboard[place-1][1]['jmmscore']}, and {leaderboard[place-1][1]['positivity']}% positive reactions)", inline=False)
-        await ctx.send(embed=embed)
+        response = await ctx.send(embed=embed)
+        await self.await_delete(response)
 
 def setup(bot):
     bot.add_cog(info(bot))
