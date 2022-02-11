@@ -62,7 +62,7 @@ intents = discord.Intents.default()
 intents.reactions = True
 intents.guilds = True
 intents.members = True
-bot = commands.Bot(help_command=helpcommand.HelpCommand(), command_prefix=".", owner_id=int(config['owner_id']), intents=intents, activity=discord.Activity(type=discord.ActivityType.playing, name="starting up..."))
+bot = commands.Bot(help_command=helpcommand.HelpCommand(), command_prefix="+", owner_id=int(config['owner_id']), intents=intents, activity=discord.Activity(type=discord.ActivityType.playing, name="starting up..."))
 bot.start_time = time.time()
 bot.logger = logging.getLogger('jmmith')
 bot.dbip = 'localhost'
