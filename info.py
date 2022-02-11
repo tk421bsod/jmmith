@@ -23,7 +23,7 @@ class info(commands.Cog):
             user = ctx.author
         return user
 
-    async def await_delete(self, message):
+    async def await_delete(self, ctx, message):
         await message.add_reaction("\U0001f5d1")
         await asyncio.sleep(0.5)
         start = time.time()
@@ -37,7 +37,7 @@ class info(commands.Cog):
                 await message.clear_reaction("\U0001f5d1")
                 return False
             users = await reaction[0].users().flatten()
-            if message.author in users and reaction[0].message.id == message.id:
+            if ctx.message.author in users and reaction[0].message.id == message.id:
                 await message.delete()
                 return True
 
@@ -156,7 +156,7 @@ class info(commands.Cog):
                 break
             desc += f"{i['reactions']} gold jmms: [Go to message]({i['message'].jump_url})\n"
         response = await ctx.send(embed=discord.Embed(title=f"{user}'s most golden jmmed messages:", description=desc, color=0xFDFE00))
-        deleted = await self.await_delete(response)
+        deleted = await self.await_delete(ctx, response)
         if loading and deleted:
             await loading.delete()
 
@@ -185,7 +185,7 @@ class info(commands.Cog):
                 break
             desc += f"{i['reactions']} nogoldjmms: [Go to message]({i['message'].jump_url})\n"
         response = await ctx.send(embed=discord.Embed(title=f"{user}'s most nogoldjmmed messages:", description=desc, color=discord.Color.dark_red()))
-        deleted = await self.await_delete(response)
+        deleted = await self.await_delete(ctx, response)
         if loading and deleted:
             await loading.delete()
 
@@ -229,7 +229,7 @@ class info(commands.Cog):
             response = await ctx.send(embed=leaderboard)
         except discord.HTTPException:
             response = await ctx.send("<:blobpaiN:839543891518685225> I can't show what you requested. Try using a smaller limit. (or a smaller interval if you're using leaderboard slicing)")
-        deleted = await self.await_delete(response)
+        deleted = await self.await_delete(ctx, response)
         if loading and deleted:
             await loading.delete()
 
@@ -271,7 +271,7 @@ class info(commands.Cog):
             if place > 0:
                 embed.add_field(name="Behind:", value=f"{leaderboard[place-1][0]} (with {leaderboard[place-1][1]['messages']} messages on the jmmboard, {leaderboard[place-1][1]['reactions']} golden jmms recieved, a jmmscore of {leaderboard[place-1][1]['jmmscore']}, and {leaderboard[place-1][1]['positivity']}% positive reactions)", inline=False)
         response = await ctx.send(embed=embed)
-        deleted = await self.await_delete(response)
+        deleted = await self.await_delete(ctx, response)
         if loading and deleted:
             await loading.delete()
 
