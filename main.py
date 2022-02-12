@@ -103,6 +103,7 @@ def progress_bar(current, total, barlength, extrainfo):
 
 async def add_to_cache(channel):
     print("Adding channel to cache... \n")
+    bot.tempmessages = bot.messages
     #purge anything from this channel that's already in cache
     if bot.initial_caching:
         progress_bar(bot.messagecount, 1000, 50, f"#{channel.name}  Fetching history...")
