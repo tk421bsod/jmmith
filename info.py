@@ -41,6 +41,16 @@ class info(commands.Cog):
                 await message.delete()
                 return True
 
+    async def show_loading_message(self, text):
+        if self.delay > 1:
+            return await ctx.send(text)
+        return None
+
+    async def command_completed(self, response, loading):
+        deleted = await self.await_delete(response)
+        if loading and deleted:
+            await loading.delete()
+
 #TODO: cache jmmmapping so we don't need to do this on demand (it's slow)
     async def get_jmmmapping(self):
         '''Gets jmmboard data for every user'''
@@ -142,10 +152,7 @@ class info(commands.Cog):
             user = await self.convert_to_member(ctx, user)
         except:
             return await ctx.send("I can't find that user.")
-        if self.delay > 1:
-            loading = await ctx.send("Fetching jmmboard data...")
-        else:
-            loading = None
+        loading = await self.show_loading_message("Fetching jmmboard data...")
         most_jmmed = await self.get_most_jmms(str(user))
         most_jmmed.sort(key=self.get_jmms_alt, reverse=True)
         if not most_jmmed:
@@ -156,9 +163,7 @@ class info(commands.Cog):
                 break
             desc += f"{i['reactions']} gold jmms: [Go to message]({i['message'].jump_url})\n"
         response = await ctx.send(embed=discord.Embed(title=f"{user}'s most golden jmmed messages:", description=desc, color=0xFDFE00))
-        deleted = await self.await_delete(ctx, response)
-        if loading and deleted:
-            await loading.delete()
+        await self.command_completed(response, loading)
 
     @commands.command(hidden=True, aliases=['demmjtsom', 'negativegoldjmms', 'mostjmmednt', 'mostcursed'])
     async def mostunjmmed(self, ctx, *, user=None):
@@ -171,10 +176,7 @@ class info(commands.Cog):
             user = await self.convert_to_member(ctx, user)
         except:
             return await ctx.send("I can't find that user.")
-        if self.delay >= 1:
-            loading = await ctx.send("Fetching draobmmj data...")
-        else:
-            loading = None
+        loading = await self.send_loading_message("Getting draobmmj data...")
         most_jmmed = await self.get_most_jmms(str(user), True)
         most_jmmed.sort(key=self.get_jmms_alt, reverse=True)
         if not most_jmmed:
@@ -185,9 +187,7 @@ class info(commands.Cog):
                 break
             desc += f"{i['reactions']} nogoldjmms: [Go to message]({i['message'].jump_url})\n"
         response = await ctx.send(embed=discord.Embed(title=f"{user}'s most nogoldjmmed messages:", description=desc, color=discord.Color.dark_red()))
-        deleted = await self.await_delete(ctx, response)
-        if loading and deleted:
-            await loading.delete()
+        await self.command_completed(loading, response)
 
     @commands.command(hidden=True, aliases=['leaderboard', 'jmmleaderboards'])
     async def jmmleaderboard(self, ctx, limit:typing.Optional[str]=None):
