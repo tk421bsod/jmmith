@@ -176,7 +176,7 @@ class info(commands.Cog):
             user = await self.convert_to_member(ctx, user)
         except:
             return await ctx.send("I can't find that user.")
-        loading = await self.send_loading_message(ctx, "Getting draobmmj data...")
+        loading = await self.show_loading_message(ctx, "Getting draobmmj data...")
         most_jmmed = await self.get_most_jmms(str(user), True)
         most_jmmed.sort(key=self.get_jmms_alt, reverse=True)
         if not most_jmmed:
