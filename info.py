@@ -187,7 +187,7 @@ class info(commands.Cog):
                 break
             desc += f"{i['reactions']} nogoldjmms: [Go to message]({i['message'].jump_url})\n"
         response = await ctx.send(embed=discord.Embed(title=f"{user}'s most nogoldjmmed messages:", description=desc, color=discord.Color.dark_red()))
-        await self.command_completed(ctx, loading, response)
+        await self.command_completed(ctx, response, loading)
 
     @commands.command(hidden=True, aliases=['leaderboard', 'jmmleaderboards'])
     async def jmmleaderboard(self, ctx, limit:typing.Optional[str]=None):
