@@ -1,4 +1,4 @@
-Ryuimport asyncio
+import asyncio
 import typing
 import discord
 from discord.ext import commands
@@ -78,8 +78,6 @@ class info(commands.Cog):
             #don't include users with no stats on the leaderboard
             if not jmmmapping[i]['reactions'] and not jmmmapping[i]['draobmmjreactions']:
                 jmmmapping.pop(i)
-            elif jmmmapping[i]['draobmmjreactions'] and not jmmmapping[i]['reactions']:
-                jmmmapping[i]['positivity'] = 0
             else:
                 jmmmapping[i]['positivity'] = round((jmmmapping[i]['reactions']/(jmmmapping[i]['reactions']+jmmmapping[i]['draobmmjreactions']))*100,1)
         self.delay = time.time()-start    
