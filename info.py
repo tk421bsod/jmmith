@@ -1,4 +1,4 @@
-import asyncio
+Ryuimport asyncio
 import typing
 import discord
 from discord.ext import commands
@@ -37,7 +37,7 @@ class info(commands.Cog):
                 await message.clear_reaction("\U0001f5d1")
                 return False
             users = await reaction[0].users().flatten()
-            if ctx.message.author in users and reaction[0].message.id == message.id:
+            if ctx.message.author in users and reaction[0].message.id == message.id and reaction.emoji == "\U0001f5d1":
                 await message.delete()
                 return True
 
@@ -75,6 +75,7 @@ class info(commands.Cog):
         #step two: calculate stats based on those reactions
         for i in list(jmmmapping.keys()):
             jmmmapping[i]['jmmscore'] = jmmmapping[i]['reactions']-jmmmapping[i]['draobmmjreactions']
+            #don't include users with no stats on the leaderboard
             if not jmmmapping[i]['reactions'] and not jmmmapping[i]['draobmmjreactions']:
                 jmmmapping.pop(i)
             elif jmmmapping[i]['draobmmjreactions'] and not jmmmapping[i]['reactions']:
