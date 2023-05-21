@@ -18,7 +18,7 @@ class settings(commands.Cog):
         self.logger = logging.getLogger(name="cogs.config")
         self.unusablewithmessage = ""
         if load:
-            bot.loop.create_task(self.fill_settings_cache())
+            asyncio.create_task(self.fill_settings_cache())
             self.logger.debug("Created a task for filling the setting cache")
 
     async def fill_settings_cache(self):
@@ -131,8 +131,8 @@ class settings(commands.Cog):
             return await ctx.send(f"Something went wrong while changing that setting. Try again in a moment. \nI've reported this error to my owner.")
         await ctx.send(embed=discord.Embed(title="Changes saved.", description=f"**{'Disabled' if not self.bot.settings[setting][ctx.guild.id] else 'Enabled'}** *{self.settingdescmapping[setting]}*.\n{self.unusablewithmessage}", color=0xFDFE00).set_footer(text=f"Send this command again to turn this back {'off' if self.bot.settings[setting][ctx.guild.id] else 'on'}."))
 
-def setup(bot):
-    bot.add_cog(settings(bot, True))
+async def setup(bot):
+    await bot.add_cog(settings(bot, True))
 
-def teardown(bot):
-    bot.remove_cog(settings(bot))
+async def teardown(bot):
+    await bot.remove_cog(settings(bot))

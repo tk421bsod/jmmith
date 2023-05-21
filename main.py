@@ -62,6 +62,7 @@ intents = discord.Intents.default()
 intents.reactions = True
 intents.guilds = True
 intents.members = True
+intents.message_content = True
 bot = commands.Bot(help_command=helpcommand.HelpCommand(), command_prefix="+", owner_id=int(config['owner_id']), intents=intents, activity=discord.Activity(type=discord.ActivityType.playing, name="starting up..."))
 bot.start_time = time.time()
 bot.logger = logging.getLogger('jmmith')
@@ -87,12 +88,6 @@ if parse_version(discord.__version__).major < 2:
 else:
     bot.IS_DPY_2 = True
 bot.USE_CUSTOM_EMOJI = config['custom_emoji']
-bot.load_extension('jishaku')
-bot.load_extension('jmmboardconfig')
-bot.load_extension('info')
-#maximilian extensions that provide some useful functionality
-bot.load_extension('core')
-bot.load_extension('errorhandling')
 
 def progress_bar(current, total, barlength, extrainfo):
     percent = float(current) * 100 / total
@@ -108,7 +103,7 @@ async def add_to_cache(channel):
     if bot.initial_caching:
         progress_bar(bot.messagecount, 1000, 50, f"#{channel.name}  Fetching history...")
     print("\n")
-    history = await channel.history(limit=None, oldest_first=True).flatten()
+    history = [message async for message in channel.history(limit=None, oldest_first=True)]
     messages = []
     for message in history:
         messages.append(message)
@@ -133,9 +128,8 @@ async def add_to_cache(channel):
         total += len(bot.guilds[0].threads)
     print(f'{bot.itercount}/{total} channels cached')
     #be polite and wait for a bit before releasing the lock
-    await asyncio.sleep(15)
+    await asyncio.sleep(2)
 
-@tasks.loop(minutes=60)
 async def update_cache():
     if bot.initial_caching:
         return
@@ -151,7 +145,8 @@ async def update_cache():
 @bot.event
 async def on_ready():
     print("ready")
-    if not bot.initial_caching:
+    await bot.cache_lock.acquire()
+    if bot.initial_caching:
         return
     print("adding stuff to cache...")
     async with bot.cache_lock:
@@ -223,4 +218,15 @@ async def on_raw_reaction_add(payload):
                 await add_to_jmmboard(payload, message, channel, starboardchannel, guild, True)
                 break
 
-bot.run(config['token'])
+async def load_exts():
+    await bot.load_extension('jishaku')
+    await bot.load_extension('jmmboardconfig')
+    await bot.load_extension('info')
+    #maximilian extensions that provide some useful functionality
+    await bot.load_extension('core')
+    await bot.load_extension('errorhandling')
+    bot.cache_lock = asyncio.Lock()
+
+bot.setup_hook = load_exts
+
+asyncio.run(bot.start(config['token']))
