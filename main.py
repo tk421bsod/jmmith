@@ -102,23 +102,23 @@ async def add_to_cache(channel):
     #purge anything from this channel that's already in cache
     if bot.initial_caching:
         progress_bar(bot.messagecount, 1000, 50, f"#{channel.name}  Fetching history...")
-    print("\n")
+    print("\n")
     messages = []
     async for message in channel.history(limit=None, oldest_first=True):
-        messages.append(message)
+        reactions = [0, 0]
+        for i in message.reactions:
+            if hasattr(i.emoji, 'id'):
+                if i.emoji.id == 774445538409054218:
+                    reactions[0] += i.count
+                elif i.emoji.id == 776612785647910933:
+                    reactions[1] += i.count
+        if reactions[0] or reactions[1]:
+            messages.append(message)
         if bot.initial_caching:
             print(f"Cached {bot.messagecount} messages so far                       ", end="\r")
         bot.messagecount += 1
-    for message in bot.tempmessages:
-        if message.channel == channel:
-            try:
-                #for some reason this blocked???????
-                await asyncio.sleep(0.001)
-                await bot.loop.run_in_executor(None, bot.messages.remove, message)
-            except ValueError:
-                pass
     for message in messages:
-        bot.tempmessages.append(message)
+        bot.messages.append(message)
     print("\n Done adding channel to cache.")
     bot.messagecount = 1
     bot.itercount += 1
@@ -144,8 +144,6 @@ async def update_cache():
 @bot.event
 async def on_ready():
     print("ready")
-    if bot.initial_caching:
-        return
     print("adding stuff to cache...")
     async with bot.cache_lock:
         for i in bot.guilds[0].text_channels:
