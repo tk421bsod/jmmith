@@ -102,13 +102,12 @@ async def add_to_cache(channel):
     #purge anything from this channel that's already in cache
     if bot.initial_caching:
         progress_bar(bot.messagecount, 1000, 50, f"#{channel.name}  Fetching history...")
-    print("\n")
-    history = [message async for message in channel.history(limit=None, oldest_first=True)]
+    print("\n")
     messages = []
-    for message in history:
+    async for message in channel.history(limit=None, oldest_first=True):
         messages.append(message)
         if bot.initial_caching:
-            progress_bar(bot.messagecount, len(history), 50, f'#{channel.name}  {bot.messagecount}/{len(history)} messages')
+            print(f"Cached {bot.messagecount} messages so far                       ", end="\r")
         bot.messagecount += 1
     for message in bot.tempmessages:
         if message.channel == channel:
@@ -145,7 +144,6 @@ async def update_cache():
 @bot.event
 async def on_ready():
     print("ready")
-    await bot.cache_lock.acquire()
     if bot.initial_caching:
         return
     print("adding stuff to cache...")
