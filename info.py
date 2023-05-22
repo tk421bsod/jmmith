@@ -166,7 +166,7 @@ class info(commands.Cog):
             if user:
                 desc += f"[{i['reactions']} gold jmms]({i['message'].jump_url})\n"
             else:
-                desc += f"[{i['reactions']} gold jmms (by {message.author})]({i['message'].jump_url})\n"
+                desc += f"[{i['reactions']} gold jmms (by {i['message'].author})]({i['message'].jump_url})\n"
         if not user:
             user = "The server"
         response = await ctx.send(embed=discord.Embed(title=f"{user}'s most golden jmmed messages:", description=desc, color=0xFDFE00))
@@ -195,7 +195,7 @@ class info(commands.Cog):
             if user:
                 desc += f"[{i['reactions']} nogoldjmms]({i['message'].jump_url})\n"
             else:
-                desc += f"[{i['reactions']} nogoldjmms (by {message.author})]({i['message'].jump_url})\n"
+                desc += f"[{i['reactions']} nogoldjmms (by {i['message'].author})]({i['message'].jump_url})\n"
         if not user:
             user = "The server"
         response = await ctx.send(embed=discord.Embed(title=f"{user}'s most nogoldjmmed messages:", description=desc, color=discord.Color.dark_red()))
