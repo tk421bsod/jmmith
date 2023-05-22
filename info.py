@@ -163,7 +163,12 @@ class info(commands.Cog):
         for i in most_jmmed[:10]:
             if len(desc+f"{i['reactions']} gold jmms: [Go to message]({i['message'].jump_url})") >= 4096:
                 break
-            desc += f"{i['reactions']} gold jmms: [Go to message]({i['message'].jump_url})\n"
+            if user:
+                desc += f"[{i['reactions']} gold jmms]({i['message'].jump_url})\n"
+            else:
+                desc += f"[{i['reactions']} gold jmms (by {message.author})]({i['message'].jump_url})\n"
+        if not user:
+            user = "The server"
         response = await ctx.send(embed=discord.Embed(title=f"{user}'s most golden jmmed messages:", description=desc, color=0xFDFE00))
         await self.command_completed(ctx, response, loading)
 
@@ -185,9 +190,14 @@ class info(commands.Cog):
             return await ctx.send("It doesn't look like you have any nogoldjmms on your messages.")
         desc = ""
         for i in most_jmmed[:10]:
-            if len(desc+f"{i['reactions']} nogoldjmms: [Go to message]({i['message'].jump_url})") >= 4096:
+            if len(desc+f"[{i['reactions']} nogoldjmms]({i['message'].jump_url})") >= 4096:
                 break
-            desc += f"{i['reactions']} nogoldjmms: [Go to message]({i['message'].jump_url})\n"
+            if user:
+                desc += f"[{i['reactions']} nogoldjmms]({i['message'].jump_url})\n"
+            else:
+                desc += f"[{i['reactions']} nogoldjmms (by {message.author})]({i['message'].jump_url})\n"
+        if not user:
+            user = "The server"
         response = await ctx.send(embed=discord.Embed(title=f"{user}'s most nogoldjmmed messages:", description=desc, color=discord.Color.dark_red()))
         await self.command_completed(ctx, response, loading)
 
