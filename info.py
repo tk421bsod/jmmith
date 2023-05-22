@@ -89,7 +89,8 @@ class info(commands.Cog):
         start = time.time()
         jmms = []
         for message in self.bot.messages:
-            if str(message.author) != user and user != None:
+            #TODO: why in the hell do we convert user to str
+            if str(message.author) != user and user != "None":
                 continue
             for i in message.reactions: 
                 if hasattr(i.emoji, 'id'):
