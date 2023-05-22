@@ -38,7 +38,7 @@ class info(commands.Cog):
             except asyncio.TimeoutError:
                 await message.clear_reaction("\U0001f5d1")
                 return False
-            users = [async for user in reaction[0].users()]
+            users = [user async for user in reaction[0].users()]
             if ctx.message.author in users and reaction[0].message.id == message.id and reaction.emoji == "\U0001f5d1":
                 await message.delete()
                 return True
