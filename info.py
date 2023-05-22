@@ -16,9 +16,11 @@ class info(commands.Cog):
     async def convert(self, ctx, arg):
         return await commands.MemberConverter().convert(ctx, arg)
 
-    async def convert_to_member(self, ctx, user):
+    async def convert_to_member(self, ctx, user, allow_none=False):
         if user:
             user = await self.convert(ctx, user)
+        elif allow_none and user == None:
+            pass
         else:
             user = ctx.author
         return user
@@ -87,7 +89,7 @@ class info(commands.Cog):
         start = time.time()
         jmms = []
         for message in self.bot.messages:
-            if str(message.author) != user:
+            if str(message.author) != user and user != None:
                 continue
             for i in message.reactions: 
                 if hasattr(i.emoji, 'id'):
@@ -148,7 +150,7 @@ class info(commands.Cog):
                 total += len(self.bot.guilds[0].threads)
             return await ctx.send(f"The message cache isn't ready yet. Try again later. \n{self.bot.itercount}/{total} channels have been cached.")
         try:
-            user = await self.convert_to_member(ctx, user)
+            user = await self.convert_to_member(ctx, user, allow_none=True)
         except:
             return await ctx.send("I can't find that user.")
         loading = await self.show_loading_message(ctx, "Fetching jmmboard data...")
@@ -172,7 +174,7 @@ class info(commands.Cog):
                 total += len(self.bot.guilds[0].threads)
             return await ctx.send(f"The message cache isn't ready yet. Try again later. \n{self.bot.itercount}/{total} channels have been cached.")
         try:
-            user = await self.convert_to_member(ctx, user)
+            user = await self.convert_to_member(ctx, user, allow_none=True)
         except:
             return await ctx.send("I can't find that user.")
         loading = await self.show_loading_message(ctx, "Getting draobmmj data...")
