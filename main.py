@@ -23,8 +23,8 @@ def parse_version(versionstring):
 
 def validate_config(config):
     '''Ensures that the configuration data is complete and has the right data types.'''
-    VALID_FLAGS = ['owner_id', 'custom_emoji', 'draobmmj_enabled', 'draobmmj_emoji', 'jmmboard_emoji', 'token', 'dbp', 'jmmboard_channel', 'draobmmj_channel']
-    FLAG_TYPES = {'owner_id':int, 'custom_emoji':bool, 'draobmmj_enabled':bool, 'draobmmj_emoji':str, 'jmmboard_emoji':str, 'token':str, 'dbp':str, 'jmmboard_channel':str, 'draobmmj_channel':str}
+    VALID_FLAGS = ['owner_id', 'custom_emoji', 'draobmmj_enabled', 'draobmmj_emoji', 'jmmboard_emoji', 'token', 'dbp', 'jmmboard_channel', 'draobmmj_channel', 'guild']
+    FLAG_TYPES = {'owner_id':int, 'custom_emoji':bool, 'draobmmj_enabled':bool, 'draobmmj_emoji':str, 'jmmboard_emoji':str, 'token':str, 'dbp':str, 'jmmboard_channel':int, 'guild':int, 'draobmmj_channel':int}
     for flag in VALID_FLAGS:
         try:
             config[flag]
@@ -38,6 +38,8 @@ def validate_config(config):
                 print(f"If you believe you entered everything correctly, send the following line to tk421#2016.\n{flag}: expected '{FLAG_TYPES[flag].__name__}', got '{type(config[flag]).__name__}'. raw: '{config[flag]}'")
                 os._exit(2)
         except:
+            if "draobmmj" in flag:
+                continue
             print("The configuration file is missing something. Try running setup.sh again.")
             os._exit(1)
 
@@ -55,39 +57,36 @@ def load_config():
     validate_config(config)
     return config
 
-logging.basicConfig(level=logging.INFO)
-print("starting...")
-config = load_config()
-intents = discord.Intents.default()
-intents.reactions = True
-intents.guilds = True
-intents.members = True
-intents.message_content = True
-bot = commands.Bot(help_command=helpcommand.HelpCommand(), command_prefix="+", owner_id=int(config['owner_id']), intents=intents, activity=discord.Activity(type=discord.ActivityType.playing, name="starting up..."))
-bot.start_time = time.time()
-bot.logger = logging.getLogger('jmmith')
-bot.dbip = 'localhost'
-bot.messages = []
-bot.database = "maximilian"
-bot.dbinst = common.db(bot, config['dbp'])
-try:
-    bot.dbinst.connect(bot.database)
-except pymysql.err.OperationalError:
-    bot.logger.critical(f"Couldn't connect to a local database. Trying 10.0.0.51")
-    bot.dbip = '10.0.0.51'
+async def run():
+    logging.basicConfig(level=logging.INFO)
+    print("starting...")
+    config = load_config()
+    intents = discord.Intents.default()
+    intents.members = True
+    intents.messages = True
+    bot = commands.Bot(help_command=helpcommand.HelpCommand(), command_prefix="+", owner_id=int(config['owner_id']), intents=intents, activity=discord.Activity(type=discord.ActivityType.playing, name="starting up..."))
+    bot.start_time = time.time()
+    bot.logger = logging.getLogger('jmmith')
+    bot.dbip = 'localhost'
+    bot.messages = []
+    bot.database = "maximilian"
     bot.dbinst = common.db(bot, config['dbp'])
-    bot.dbinst.connect(bot.database)
-bot.cache_lock = asyncio.Lock()
-bot.itercount = 0
-bot.messagecount = 1
-bot.previousinfo = ""
-bot.initial_caching = True
-if parse_version(discord.__version__).major < 2:
-    bot.IS_DPY_2 = False
-    bot.logger.warning("It looks like you're running Jmmith using a discord.py version less than 2.0! Jmmith will not work in threads.")
-else:
-    bot.IS_DPY_2 = True
-bot.USE_CUSTOM_EMOJI = config['custom_emoji']
+    bot.cache_lock = asyncio.Lock()
+    bot.itercount = 0
+    bot.messagecount = 1
+    bot.previousinfo = ""
+    bot.initial_caching = True
+    if parse_version(discord.__version__).major < 2:
+        print("\nJmmith no longer supports discord.py versions below 2.0.")
+        print("Either update discord.py (through 'python3 -m pip install discord.py[voice]') or use an older version of Jmmith.")
+        print("If you choose to use an old version, you're on your own - those versions lack support from tk421 and full compatibility with discord.py 2. Old versions may also stop working without notice.")
+        print("See https://gist.github.com/Rapptz/c4324f17a80c94776832430007ad40e6 for more information about this.")
+    await bot.load_extension('jishaku')
+    await bot.load_extension('jmmboardconfig')
+    await bot.load_extension('info')
+    #maximilian extensions that provide some useful functionality
+    await bot.load_extension('core')
+    await bot.load_extension('errorhandling')
 
 def progress_bar(current, total, barlength, extrainfo):
     percent = float(current) * 100 / total
@@ -182,12 +181,9 @@ async def add_to_jmmboard(payload, message, channel, starboardchannel, guild, dr
         if len(message.attachments) != 0:
             embed.set_image(url=message.attachments[0].url)
         if not message.content and message.embeds:
-            embed.description = "<:blobpaiN:839543891518685225> I can't display embeds."
+            embed.description = "Sorry, I can't display embeds."
         embed.add_field(name="⠀", value="[Go to message](https://discord.com/channels/631316422328451082/" + str(payload.channel_id) + "/" + str(payload.message_id) + ")", inline=False)
-        if not bot.IS_DPY_2:
-            icon_url = message.author.avatar_url
-        else:
-            icon_url = str(message.author.avatar.url)
+        icon_url = str(message.author.avatar.url)
         embed.set_footer(text=f"Original message sent by {message.author.name}#{message.author.discriminator}.", icon_url=icon_url)
         starboardmessage = await starboardchannel.send(embed=embed)
         bot.messages.append(message)
@@ -214,15 +210,4 @@ async def on_raw_reaction_add(payload):
                 await add_to_jmmboard(payload, message, channel, starboardchannel, guild, True)
                 break
 
-async def load_exts():
-    await bot.load_extension('jishaku')
-    await bot.load_extension('jmmboardconfig')
-    await bot.load_extension('info')
-    #maximilian extensions that provide some useful functionality
-    await bot.load_extension('core')
-    await bot.load_extension('errorhandling')
-    bot.cache_lock = asyncio.Lock()
-
-bot.setup_hook = load_exts
-
-asyncio.run(bot.start(config['token']))
+asyncio.run(run())

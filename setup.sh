@@ -47,18 +47,20 @@ fi
 if [ -f token.txt -a "$update" == "false" ]
 then
     echo " ---- WARNING ---- "
-    echo "It looks like you've been using an older version of setup.sh. The configuration data format has changed, so you'll need to re-enter the token and database password. Don't continue until you have those ready."
-    echo "Quit setup now (using either Ctrl-C or Ctrl-Z) if you want to keep (or copy) the old data."
-    echo "Jmmith will not work until this finishes."
-    echo "Press Enter if you want to continue. THIS WILL DELETE THE OLD DATA."
+    echo "It looks like you've been using an older version of Jmmith."
+    echo "Your configuration data will need to be migrated as the format has changed."
+    echo "Press Enter when you're ready."
     read -s
     echo ""
-    echo "Ok, starting setup."
+    echo "Ok, migrating old data."
     sleep 1
+    echo "token:$(cat token.txt)" >> config
+    echo "dbp:$(cat dbp.txt)" >> config
     rm token.txt
     rm dbp.txt
-    echo "Deleted old data."
-    echo ""
+    echo "Migrated old data."
+    echo "Press Enter to continue with setup, or press Ctrl-C to quit."
+    read -s
 fi
 
 if [ -f config -a "$update" == "false" ];
@@ -131,8 +133,23 @@ echo "Done."
 if [ "$update" == "false" ]
 then
     echo ""
+    echo "Jmmith can only be used in one server."
+    echo "Enter the ID of the server you want to use Jmmith with."
+    read guild
+    if [ "$guild" == "" ]
+    then
+        echo "You need to enter a server ID."
+        exit 36
+    fi
+    echo "guild:$guild" >> config
+    echo ""
     echo "Enter the ID of the channel you want to use as the jmmboard."
     read jmmboard
+    if [ "$jmmboard" == "" ]
+    then
+        echo "You need to enter a channel ID to use as the jmmboard."
+        exit 36
+    fi
     echo "jmmboard_channel:$jmmboard" >> config
 
     echo ""
@@ -146,39 +163,38 @@ then
         echo "draobmmj_channel:$draobmmj" >> config
     else
         echo "draobmmj_enabled:0" >> config
-        echo "Not enabling the draobmmj"
+        echo "Not enabling the draobmmj."
     fi
 
     echo "Do you want to enable custom emoji?"
     echo "Read the following carefully, as your choice will greatly affect Jmmith."
     echo "Answering 'yes' will prompt you for each custom emoji Jmmith uses."
     echo "You'll need to enter the emoji in the correct format (<:name:id>). You can get an emoji in that format by typing a backslash before its name, e.g '\:gold_jmm:' = '<:gold_jmm:38347567382657>'"
-echo "Answering 'no' will make Jmmith use a predefined set of built-in emoji."
-read custom_emoji
-if [ ${custom_emoji^^} == "YES" ]
-then
-    echo ""
-    echo "Enabling custom emoji."
-    echo "Enter the emoji you want Jmmith to use for the jmmboard. This has to be in the format shown above."
-    read jmmboardemoji
-    echo "jmmboard_emoji:$jmmboardemoji" >> config
-    sed -i 's/custom_emoji:0/custom_emoji:1/' test
-    if [ ${draobmmj_enabled^^} == "YES" ]
+    echo "Answering anything else will make Jmmith use a predefined set of built-in emoji."
+    read custom_emoji
+    if [ ${custom_emoji^^} == "YES" ]
     then
-        echo "One more thing: Enter the emoji you want Jmmith to use for the draobmmj. Again, this has to be in the format shown above."
-        read draobmmj_emoji
-        echo "draobmmj_emoji:$draobmmj_emoji" >> config
+        echo ""
+        echo "Enabling custom emoji."
+        echo "Enter the emoji you want Jmmith to use for the jmmboard. This has to be in the format shown above."
+        read jmmboardemoji
+        echo "jmmboard_emoji:$jmmboardemoji" >> config
+        echo "custom_emoji:1" >> config
+        if [ ${draobmmj_enabled^^} == "YES" ]
+        then
+            echo "One more thing: Enter the emoji you want Jmmith to use for the draobmmj. Again, this has to be in the format shown above."
+            read draobmmj_emoji
+            echo "draobmmj_emoji:$draobmmj_emoji" >> config
+        else
+            echo "draobmmj isn't enabled, skipping"
+            echo "draobmmj_emoji:0" >> config
+        fi
     else
-        echo "draobmmj isn't enabled, skipping"
-        echo "draobmmj_emoji:0" >> config
+        echo ""
+        echo "Disabling custom emoji."
+        echo "jmmboard_emoji:\U00002b50" >> config
+        echo "draobmmj_emoji:\U0000274e" >> config
     fi
-else
-    echo ""
-    echo "Disabling custom emoji."
-    echo "jmmboard_emoji:0" >> config
-    echo "draobmmj_emoji:0" >> config
-fi
-
 echo "Finishing database setup..."
 sudo mysql maximilian -Be "CREATE TABLE jmmboard(message_id bigint); CREATE TABLE draobmmj(message_id bigint); CREATE TABLE jmmboardconfig(guild_id bigint, setting text, enabled tinyint); CREATE TABLE blocked(user_id bigint);"
 echo "Cleaning up..."
